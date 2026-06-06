@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Interactive Card Hand Demo</title>
   <style>
     :root {
@@ -13,20 +13,26 @@
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     html,
     body {
       margin: 0;
+      width: 100%;
       min-height: 100%;
       overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
       background:
         radial-gradient(circle at 50% 12%, rgba(84, 126, 185, 0.65), transparent 36%),
         radial-gradient(circle at 15% 80%, rgba(111, 60, 156, 0.38), transparent 36%),
         linear-gradient(145deg, #0f172a, #111827 52%, #030712);
       color: white;
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      -webkit-tap-highlight-color: transparent;
     }
 
     body {
@@ -36,7 +42,8 @@
       padding: max(18px, env(safe-area-inset-top)) 16px max(22px, env(safe-area-inset-bottom));
     }
 
-    header {
+    header,
+    footer {
       text-align: center;
       pointer-events: none;
     }
@@ -62,6 +69,7 @@
       perspective: 1100px;
       perspective-origin: 50% 58%;
       padding-bottom: min(12vh, 72px);
+      touch-action: none;
     }
 
     .glow {
@@ -84,6 +92,7 @@
       width: 100%;
       max-width: 760px;
       transform-style: preserve-3d;
+      touch-action: none;
     }
 
     .card {
@@ -102,16 +111,14 @@
       grid-template-rows: auto 1fr auto;
       padding: clamp(10px, 2.5vw, 16px);
       transform-style: preserve-3d;
-      transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
-      user-select: none;
+      transition: box-shadow 140ms ease, filter 140ms ease;
+      will-change: transform;
       touch-action: none;
       cursor: grab;
       isolation: isolate;
     }
 
-    .card:first-child {
-      margin-left: 0;
-    }
+    .card:first-child { margin-left: 0; }
 
     .card::before {
       content: "";
@@ -120,7 +127,6 @@
       border-radius: inherit;
       background: radial-gradient(circle at var(--shine-x, 50%) var(--shine-y, 30%), rgba(255, 255, 255, 0.78), transparent 38%);
       opacity: 0;
-      transition: opacity 160ms ease;
       pointer-events: none;
       z-index: 2;
       mix-blend-mode: screen;
@@ -142,13 +148,16 @@
       cursor: grabbing;
     }
 
-    .card.active::before {
-      opacity: 1;
+    .card.active::before { opacity: 1; }
+
+    .corner,
+    .pip {
+      position: relative;
+      z-index: 3;
+      pointer-events: none;
     }
 
     .corner {
-      position: relative;
-      z-index: 3;
       font-weight: 900;
       font-size: clamp(1rem, 4.4vw, 1.55rem);
       line-height: 0.9;
@@ -162,8 +171,6 @@
     }
 
     .pip {
-      position: relative;
-      z-index: 3;
       place-self: center;
       font-size: clamp(2.7rem, 12vw, 5.4rem);
       line-height: 1;
@@ -171,21 +178,21 @@
       transform: translateZ(46px);
     }
 
-    .red {
-      color: #dc2626;
+    .red { color: #dc2626; }
+
+    .card:nth-child(1) { --base-z: -24deg; --base-y: 34px; }
+    .card:nth-child(2) { --base-z: -13deg; --base-y: 13px; }
+    .card:nth-child(3) { --base-z: -3deg; --base-y: 0px; }
+    .card:nth-child(4) { --base-z: 8deg; --base-y: 8px; }
+    .card:nth-child(5) { --base-z: 20deg; --base-y: 30px; }
+
+    .card {
+      transform: translateY(var(--base-y)) rotateZ(var(--base-z));
     }
 
-    .card:nth-child(1) { --base: rotateZ(-24deg) translateY(34px); transform: var(--base); }
-    .card:nth-child(2) { --base: rotateZ(-13deg) translateY(13px); transform: var(--base); }
-    .card:nth-child(3) { --base: rotateZ(-3deg) translateY(0); transform: var(--base); }
-    .card:nth-child(4) { --base: rotateZ(8deg) translateY(8px); transform: var(--base); }
-    .card:nth-child(5) { --base: rotateZ(20deg) translateY(30px); transform: var(--base); }
-
     footer {
-      text-align: center;
       color: rgba(255, 255, 255, 0.55);
       font-size: 0.85rem;
-      pointer-events: none;
     }
 
     @media (max-width: 420px) {
@@ -194,86 +201,124 @@
         --overlap: calc(var(--card-width) * -0.44);
       }
 
-      .stage {
-        padding-bottom: 8vh;
-      }
+      .stage { padding-bottom: 8vh; }
     }
   </style>
 </head>
 <body>
   <header>
     <h1>Interactive Card Hand</h1>
-    <p>Drag, hover, or tilt each card. Works with touch on mobile and mouse on desktop.</p>
+    <p>Press and drag a card. Mobile gestures, text selection, and callouts are disabled.</p>
   </header>
 
   <main class="stage" aria-label="Interactive playing-card hand demo">
     <div class="glow"></div>
     <section class="hand">
-      <article class="card" data-card>
-        <div class="corner">A<br>♠</div>
-        <div class="pip">♠</div>
-        <div class="corner bottom">A<br>♠</div>
-      </article>
-      <article class="card red" data-card>
-        <div class="corner">K<br>♥</div>
-        <div class="pip">♥</div>
-        <div class="corner bottom">K<br>♥</div>
-      </article>
-      <article class="card red" data-card>
-        <div class="corner">Q<br>♦</div>
-        <div class="pip">♦</div>
-        <div class="corner bottom">Q<br>♦</div>
-      </article>
-      <article class="card" data-card>
-        <div class="corner">J<br>♣</div>
-        <div class="pip">♣</div>
-        <div class="corner bottom">J<br>♣</div>
-      </article>
-      <article class="card" data-card>
-        <div class="corner">10<br>♠</div>
-        <div class="pip">♠</div>
-        <div class="corner bottom">10<br>♠</div>
-      </article>
+      <article class="card" data-card><div class="corner">A<br>♠</div><div class="pip">♠</div><div class="corner bottom">A<br>♠</div></article>
+      <article class="card red" data-card><div class="corner">K<br>♥</div><div class="pip">♥</div><div class="corner bottom">K<br>♥</div></article>
+      <article class="card red" data-card><div class="corner">Q<br>♦</div><div class="pip">♦</div><div class="corner bottom">Q<br>♦</div></article>
+      <article class="card" data-card><div class="corner">J<br>♣</div><div class="pip">♣</div><div class="corner bottom">J<br>♣</div></article>
+      <article class="card" data-card><div class="corner">10<br>♠</div><div class="pip">♠</div><div class="corner bottom">10<br>♠</div></article>
     </section>
   </main>
 
-  <footer>Tip: press and move your thumb around a card.</footer>
+  <footer>Best tested as a saved Home Screen app or full-page GitHub Pages site.</footer>
 
   <script>
-    const cards = document.querySelectorAll('[data-card]');
+    const cards = [...document.querySelectorAll('[data-card]')];
+    let activeCard = null;
+    let pointerId = null;
+    let rafId = null;
 
-    function tiltCard(card, clientX, clientY) {
-      const rect = card.getBoundingClientRect();
-      const x = (clientX - rect.left) / rect.width;
-      const y = (clientY - rect.top) / rect.height;
-      const rotateY = (x - 0.5) * 34;
-      const rotateX = (0.5 - y) * 34;
+    const state = {
+      x: 0.5,
+      y: 0.5,
+      currentX: 0.5,
+      currentY: 0.5
+    };
 
+    document.addEventListener('gesturestart', event => event.preventDefault());
+    document.addEventListener('gesturechange', event => event.preventDefault());
+    document.addEventListener('gestureend', event => event.preventDefault());
+    document.addEventListener('selectstart', event => event.preventDefault());
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', event => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    function updateTargetFromEvent(event) {
+      if (!activeCard) return;
+      const rect = activeCard.getBoundingClientRect();
+      state.x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      state.y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+    }
+
+    function animate() {
+      if (!activeCard) return;
+
+      state.currentX += (state.x - state.currentX) * 0.24;
+      state.currentY += (state.y - state.currentY) * 0.24;
+
+      const rotateY = (state.currentX - 0.5) * 28;
+      const rotateX = (0.5 - state.currentY) * 28;
+      const shineX = state.currentX * 100;
+      const shineY = state.currentY * 100;
+
+      activeCard.style.setProperty('--shine-x', `${shineX}%`);
+      activeCard.style.setProperty('--shine-y', `${shineY}%`);
+      activeCard.style.transform = `translateY(-54px) scale(1.12) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(0deg)`;
+
+      rafId = requestAnimationFrame(animate);
+    }
+
+    function startInteraction(card, event) {
+      if (activeCard && activeCard !== card) endInteraction();
+
+      activeCard = card;
+      pointerId = event.pointerId;
+      card.setPointerCapture(pointerId);
       card.classList.add('active');
-      card.style.setProperty('--shine-x', `${x * 100}%`);
-      card.style.setProperty('--shine-y', `${y * 100}%`);
-      card.style.transform = `translateY(-58px) scale(1.14) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(0deg)`;
+      updateTargetFromEvent(event);
+      state.currentX = state.x;
+      state.currentY = state.y;
+
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(animate);
     }
 
-    function resetCard(card) {
-      card.classList.remove('active');
-      card.style.transform = '';
-      card.style.removeProperty('--shine-x');
-      card.style.removeProperty('--shine-y');
+    function endInteraction() {
+      if (!activeCard) return;
+      cancelAnimationFrame(rafId);
+      activeCard.classList.remove('active');
+      activeCard.style.transform = '';
+      activeCard.style.removeProperty('--shine-x');
+      activeCard.style.removeProperty('--shine-y');
+      activeCard = null;
+      pointerId = null;
     }
 
-    cards.forEach((card) => {
-      card.addEventListener('pointerenter', (event) => {
-        tiltCard(card, event.clientX, event.clientY);
+    cards.forEach(card => {
+      card.addEventListener('pointerdown', event => {
+        event.preventDefault();
+        startInteraction(card, event);
       });
 
-      card.addEventListener('pointermove', (event) => {
-        tiltCard(card, event.clientX, event.clientY);
+      card.addEventListener('pointermove', event => {
+        if (activeCard !== card || event.pointerId !== pointerId) return;
+        event.preventDefault();
+        updateTargetFromEvent(event);
       });
 
-      card.addEventListener('pointerleave', () => resetCard(card));
-      card.addEventListener('pointercancel', () => resetCard(card));
-      card.addEventListener('pointerup', () => resetCard(card));
+      card.addEventListener('pointerup', event => {
+        if (event.pointerId === pointerId) endInteraction();
+      });
+
+      card.addEventListener('pointercancel', endInteraction);
+      card.addEventListener('lostpointercapture', endInteraction);
     });
   </script>
 </body>
